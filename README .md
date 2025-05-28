@@ -46,42 +46,42 @@ Make sure you have the following tools installed:
 	
 ### 6. Modify `function_app.py`
 
-python
-import azure.functions as func
-import logging
-
-app = func.FunctionApp()
-
-@app.function_name(name="SendMessageFunction")
-@app.route(route="SendMessageFunction")  # You can change 'SendMessageFunction' to anything like 'send'
-@app.queue_output(arg_name="msg", queue_name="myqueue-items", connection="AzureWebJobsStorage")
-def main(req: func.HttpRequest, msg: func.Out[str]) -> func.HttpResponse:
-    name = req.params.get('name')
-
-    if not name:
-        return func.HttpResponse(
-            "Please pass a name in the query string.",
-            status_code=400
-        )
-
-    message = f"Hello {name}, welcome to Azure Functions Queue!"
-    msg.set(message)
-
-    return func.HttpResponse(f"Message sent to queue: {message}")
+	python
+		import azure.functions as func
+		import logging
+		
+		app = func.FunctionApp()
+		
+		@app.function_name(name="SendMessageFunction")
+		@app.route(route="SendMessageFunction")  # You can change 'SendMessageFunction' to anything like 'send'
+		@app.queue_output(arg_name="msg", queue_name="myqueue-items", connection="AzureWebJobsStorage")
+		def main(req: func.HttpRequest, msg: func.Out[str]) -> func.HttpResponse:
+		    name = req.params.get('name')
+		
+		    if not name:
+		        return func.HttpResponse(
+		            "Please pass a name in the query string.",
+		            status_code=400
+		        )
+		
+		    message = f"Hello {name}, welcome to Azure Functions Queue!"
+		    msg.set(message)
+		
+		    return func.HttpResponse(f"Message sent to queue: {message}")
 
 
 ### 7. Test Locally
 
-func start
+	func start
 
-Open browser or use Postman to call:
+	Open browser or use Postman to call:
 
-http://localhost:7071/api/SendMessageFunction
+	http://localhost:7071/api/SendMessageFunction
 
 
 ### 8. Deploy the Function to Azure
 
-func azure functionapp publish cst8917-func-queueapp
+	func azure functionapp publish cst8917-func-queueapp
 
 
 ---
@@ -89,7 +89,7 @@ func azure functionapp publish cst8917-func-queueapp
 ## Final Result
 Your function app is deployed and can be triggered via:
 
-https://cst8917-func-queueapp.azurewebsites.net/api/sendmessagefunction
+	https://cst8917-func-queueapp.azurewebsites.net/api/sendmessagefunction
 
 
 Sending a POST request with JSON will add a message to your Azure Storage Queue `student-queue`.
@@ -131,71 +131,71 @@ In this Task we'll see how to create and deploy an Azure Function App that inser
 
 ### 4. Create the Students Table
 
-Use Azure Data Studio or SQL query tool:
-sql
-CREATE TABLE Students (
-    name NVARCHAR(50),
-    grade INT
-);
+	Use Azure Data Studio or SQL query tool:
+	sql
+	CREATE TABLE Students (
+	    name NVARCHAR(50),
+	    grade INT
+	);
 
 
 ### 5. Create a Local Azure Function App
-
+	
 func init sqlbindingapp --python
 
 
 ### 6. Create a New Function
 
-cd sqlbindingapp
-func new --name AddStudentFunction --template "HTTP trigger" --authlevel "anonymous"
+	cd sqlbindingapp
+	func new --name AddStudentFunction --template "HTTP trigger" --authlevel "anonymous"
 
 
 ### 7. Modify `function_app.py`
 
-python
-import azure.functions as func
-import logging
-
-app = func.FunctionApp()
-
-@app.function_name(name="AddStudentFunction")
-@app.route(route="addstudent", methods=["POST"])
-@app.sql_output(
-    arg_name="output",                      # This MUST match the function parameter name below
-    command_text="dbo.Students",            # Your table name
-    connection_string_setting="SqlConnectionString"  # This is just a key name
-  # This must point to your key in local.settings.json
-)
-def AddStudentFunction(req: func.HttpRequest, output: func.Out[func.SqlRow]) -> func.HttpResponse:
-    logging.info('Processing request to add student to SQL DB.')
-
-    try:
-        req_body = req.get_json()
-        name = req_body.get("name")
-        grade = int(req_body.get("grade"))
-    except Exception as e:
-        logging.error(f"Invalid input or missing fields: {e}")
-        return func.HttpResponse("Invalid input", status_code=400)
-
-    # Create the SQL row
-    row = func.SqlRow.from_dict({
-        "name": name,
-        "grade": grade
-    })
-    output.set(row)
-
-    return func.HttpResponse("Student inserted successfully.")
+	python
+		import azure.functions as func
+		import logging
+		
+		app = func.FunctionApp()
+		
+		@app.function_name(name="AddStudentFunction")
+		@app.route(route="addstudent", methods=["POST"])
+		@app.sql_output(
+		    arg_name="output",                      # This MUST match the function parameter name below
+		    command_text="dbo.Students",            # Your table name
+		    connection_string_setting="SqlConnectionString"  # This is just a key name
+		  # This must point to your key in local.settings.json
+		)
+		def AddStudentFunction(req: func.HttpRequest, output: func.Out[func.SqlRow]) -> func.HttpResponse:
+		    logging.info('Processing request to add student to SQL DB.')
+		
+		    try:
+		        req_body = req.get_json()
+		        name = req_body.get("name")
+		        grade = int(req_body.get("grade"))
+		    except Exception as e:
+		        logging.error(f"Invalid input or missing fields: {e}")
+		        return func.HttpResponse("Invalid input", status_code=400)
+		
+		    # Create the SQL row
+		    row = func.SqlRow.from_dict({
+		        "name": name,
+		        "grade": grade
+		    })
+		    output.set(row)
+		
+		    return func.HttpResponse("Student inserted successfully.")
 
 ### 8. Add SQL Connection String to `local.settings.json`
 
-json
-{
-  "IsEncrypted": false,
-  "Values": {
-    "FUNCTIONS_WORKER_RUNTIME": "python",
-    "SqlConnectionString": "Enter Your connection string"
-  }
-}
+	json
+	{
+	  "IsEncrypted": false,
+	  "Values": {
+	    "FUNCTIONS_WORKER_RUNTIME": "python",
+	    "SqlConnectionString": "Enter Your connection string"
+	  }
+	}
 
 
 
